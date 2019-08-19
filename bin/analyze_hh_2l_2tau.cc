@@ -385,6 +385,8 @@ int main(int argc, char* argv[])
   std::vector<double> gen_mHH = cfg_analyze.getParameter<std::vector<double>>("gen_mHH");
   std::string BDTFileName_even_pkl  = cfg_analyze.getParameter<std::string>("pkl_FileName_even");
   std::string BDTFileName_odd_pkl   = cfg_analyze.getParameter<std::string>("pkl_FileName_odd");
+  std::string fitFunctionFileName = cfg_analyze.getParameter<std::string>("fitFunctionFileName");
+
 
   std::string selEventsFileName_input = cfg_analyze.getParameter<std::string>("selEventsFileName_input");
   std::cout << "selEventsFileName_input = " << selEventsFileName_input << std::endl;
@@ -527,7 +529,7 @@ int main(int argc, char* argv[])
   }
   */
 
-  std::vector<std::string> BDTInputVariables_SUM =
+  std::vector<std::string> BDTInputVariables_SUM = 
     {
       "diHiggsMass", 
       "diHiggsVisMass", 
@@ -539,20 +541,33 @@ int main(int argc, char* argv[])
       "met_LD", 
       "tau2_pt", 
       "dr_lep_tau_min_OS"
-    };
+    }; // Need to adapt to different mass training modes: all, low and High (Currently this is for all mass traning)
 
   std::vector<std::string> BDTSpectatorVars = {};
 
-  // Xandra's method (with .pkl file)
-  XGBInterface XGB_SUM(BDTFileName_odd_pkl, BDTFileName_even_pkl, BDTInputVariables_SUM); 
-  
-  // ------- Using special TMVAInterface_OddEven class [Used in July11 submission]
-  // TMVAInterface_OddEven BDT_SUM(BDTFileName_odd, BDTFileName_even, BDTInputVariables_SUM, BDTSpectatorVars); 
-  // BDT_SUM.enableBDTTransform();
+  XGBInterface* XGB_SUM  = NULL;
+  TMVAInterface* BDT_SUM = NULL;
 
-  // -----  Using New TMVAInterface class with built-in Odd-Even interface ----- 
-  TMVAInterface BDT_SUM(BDTFileName_odd, BDTFileName_even, BDTInputVariables_SUM, BDTSpectatorVars); 
-  BDT_SUM.enableBDTTransform();
+  if(fitFunctionFileName != ""){ // Transfrom Input Var.s before feeding into the BDT .pkl/.xml files
+    // Xandra's method (with .pkl file)
+    XGB_SUM = new XGBInterface(BDTFileName_odd_pkl, BDTFileName_even_pkl , fitFunctionFileName,  BDTInputVariables_SUM); 
+
+    // -----  Using New TMVAInterface class with built-in Odd-Even interface ----- 
+    BDT_SUM = new TMVAInterface(BDTFileName_odd, BDTFileName_even, BDTInputVariables_SUM, fitFunctionFileName, BDTSpectatorVars); 
+    BDT_SUM->enableBDTTransform();
+  }else{
+    // Xandra's method (with .pkl file)
+    XGB_SUM = new XGBInterface(BDTFileName_odd_pkl, BDTFileName_even_pkl, BDTInputVariables_SUM); 
+  
+    // -----  Using New TMVAInterface class with built-in Odd-Even interface ----- 
+    BDT_SUM = new TMVAInterface(BDTFileName_odd, BDTFileName_even, BDTInputVariables_SUM, BDTSpectatorVars); 
+    BDT_SUM->enableBDTTransform();
+
+    // ------- Using special TMVAInterface_OddEven class [Used in July11 submission]
+    // TMVAInterface_OddEven BDT_SUM(BDTFileName_odd, BDTFileName_even, BDTInputVariables_SUM, BDTSpectatorVars); 
+    // BDT_SUM.enableBDTTransform();
+  }
+
 
   std::map<std::string, double> BDTInputs_SUM;
   
@@ -1612,10 +1627,10 @@ int main(int argc, char* argv[])
       temp << mass_int;
       key = temp.str(); // Conversion from unsigned int to string
       std::string key_final = "BDTOutput_" + key;
-      BDTOutput_SUM_Map.insert( std::make_pair(key_final, BDT_SUM(BDTInputs_SUM, eventInfo.event)) );
+      BDTOutput_SUM_Map.insert( std::make_pair(key_final, (*BDT_SUM)(BDTInputs_SUM, eventInfo.event)) );
       std::string XGB_key_final = "BDTOutput_" + key + "_pkl";
-      XGBOutput_SUM_Map.insert( std::make_pair(XGB_key_final, XGB_SUM(BDTInputs_SUM, eventInfo.event)) );
-     }
+      XGBOutput_SUM_Map.insert( std::make_pair(XGB_key_final, (*XGB_SUM)(BDTInputs_SUM, eventInfo.event)) );
+    }
     // ---- NEW ENDS ------
 
 
@@ -1967,6 +1982,9 @@ int main(int argc, char* argv[])
   hltPaths_delete(triggers_1e1mu);
 
   delete inputTree;
+
+  delete XGB_SUM;
+  delete BDT_SUM;
 
   clock.Show("analyze_hh_2l_2tau");
 

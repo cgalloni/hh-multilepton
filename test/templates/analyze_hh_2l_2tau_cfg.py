@@ -120,6 +120,8 @@ process.analyze_hh_2l_2tau = cms.PSet(
     ## ".pkl -> Even train:Odd test" to be used for odd evt no.  
     pkl_FileName_odd = cms.string("hhAnalysis/multilepton/data/2l_2tau_HH_dR03mvaVLoose_oversampling_finalVars_allMasses_Train_all_Masses_2l_2tau_diagnostics_with_reweighting_XGB_evtLevelSUM_HH_2l_2tau_res_10Var_even_latest.pkl"),
 
+    fitFunctionFileName = cms.string('hhAnalysis/multilepton/data/TProfile_signal_fit_func_InputVar_AllMassTraining.root'),
+
     evtWeight = cms.PSet(
         apply = cms.bool(False),
         histogramFile = cms.string(''),

@@ -81,10 +81,10 @@ protected:
                  double eff_1l,
                  double eff_1l1tau_lepLeg) const;
 
-  double
+  TauTriggerSFValues
   getProb_tau(int tau_status,
-              double eff_1l1tau_tauLeg,
-              double eff_2tau_tauLeg) const;
+              const TauTriggerSFValues & eff_1l1tau_tauLeg,
+              const TauTriggerSFValues & eff_2tau_tauLeg) const;
 
   bool isTriggered_2tau_;
 

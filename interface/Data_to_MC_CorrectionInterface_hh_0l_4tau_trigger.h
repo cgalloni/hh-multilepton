@@ -40,9 +40,9 @@ protected:
   enum { k2tau, kNot2tau };
 
   // define auxiliary functions
-  double
+  TauTriggerSFValues
   getProb_tau(int tau_status,
-              double eff_2tau_tauLeg) const;
+              const TauTriggerSFValues & eff_2tau_tauLeg) const;
 
   //-----------------------------------------------------------------------------
   // data/MC corrections for trigger efficiencies in 2017 ReReco data and Summer17 MC
